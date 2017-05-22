@@ -7,7 +7,16 @@ import (
 const (
 	iconst = iota
 	iadd
-	jmplt
+	imul
+	ieq
+	br
+	brt
+	brf
+	load
+	pop
+	call
+	ret
+	ijmplt
 	print
 	halt
 )
@@ -20,7 +29,16 @@ type Opcode struct {
 var opMetadata = map[int]Opcode{
 	iconst: Opcode{"ICONST", 1},
 	iadd:   Opcode{"IADD", 0},
-	jmplt:  Opcode{"JMPLT", 2},
+	imul:   Opcode{"IMUL", 0},
+	ieq:    Opcode{"IEQ", 2},
+	br:     Opcode{"BR", 1},
+	brt:    Opcode{"BRT", 2},
+	brf:    Opcode{"BRF", 2},
+	load:   Opcode{"LOAD", 0},
+	pop:    Opcode{"POP", 0},
+	call:   Opcode{"CALL", 2},
+	ret:    Opcode{"RET", 0},
+	ijmplt: Opcode{"JMPLT", 2},
 	print:  Opcode{"PRINT", 0},
 	halt:   Opcode{"HALT", 0},
 }
@@ -35,11 +53,11 @@ type Dyson struct {
 func (vm *Dyson) trace() {
 	address := vm.ip
 	op := opMetadata[vm.code[vm.ip]]
-	stack := vm.stack[0:vm.sp+1]
+	stack := vm.stack[0: vm.sp+1]
 	fmt.Printf("%04d: %s \t%v\n", address, op.name, stack)
 }
 
-func (vm *Dyson) alloc(code []int) {
+func (vm *Dyson) start(code []int) {
 	vm.stack = make([]int, 100)
 	vm.sp = -1
 	vm.ip = 0
@@ -56,7 +74,17 @@ func (vm *Dyson) exec() {
 			Iconst(vm)
 		case iadd:
 			Iadd(vm)
-		case jmplt:
+		case imul:
+			Imul(vm)
+		case ieq:
+			Ieq(vm)
+		case br:
+			Br(vm)
+		case brt:
+			Brt(vm)
+		case brf:
+			Brf(vm)
+		case ijmplt:
 			Jmplt(vm)
 		case print:
 			Print(vm)
@@ -80,6 +108,45 @@ func Iadd(vm *Dyson) {
 	vm.stack[vm.sp] = top + second
 }
 
+func Imul(vm *Dyson) {
+	top := vm.stack[vm.sp]
+	vm.sp--
+	second := vm.stack[vm.sp]
+	vm.stack[vm.sp] = top * second
+}
+
+func Ieq(vm *Dyson) {
+	top := vm.stack[vm.sp]
+	vm.sp--
+	second := vm.stack[vm.sp]
+	if top == second {
+		vm.stack[vm.sp] = 1
+	} else {
+		vm.stack[vm.sp] = 0
+	}
+}
+
+func Br(vm *Dyson) {
+	vm.ip++
+	vm.ip = vm.code[vm.ip]
+}
+
+func Brt(vm *Dyson) {
+	vm.ip++
+	address := vm.code[vm.ip]
+	if vm.stack[vm.sp] == 1 {
+		vm.ip = address
+	}
+}
+
+func Brf(vm *Dyson) {
+	vm.ip++
+	address := vm.code[vm.ip]
+	if vm.stack[vm.sp] == 0 {
+		vm.ip = address
+	}
+}
+
 func Jmplt(vm *Dyson) {
 	value := vm.code[vm.ip]
 	vm.ip++
@@ -101,12 +168,12 @@ func main() {
 		iconst, 2,
 		iconst, 3,
 		iadd,
-		jmplt, 10, 2,
+		ijmplt, 10, 2,
 		print,
 		halt,
 	}
 
 	dysonVM := &Dyson{}
-	dysonVM.alloc(code)
+	dysonVM.start(code)
 	dysonVM.exec()
 }
