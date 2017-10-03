@@ -16,3 +16,6 @@ A stack based VM in golang
 - ijmplt
 - print
 - halt
+
+# TODO
+Will do a complete rewrite of the vm in near future.

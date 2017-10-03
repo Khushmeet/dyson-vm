@@ -53,7 +53,7 @@ type Dyson struct {
 func (vm *Dyson) trace() {
 	address := vm.ip
 	op := opMetadata[vm.code[vm.ip]]
-	stack := vm.stack[0: vm.sp+1]
+	stack := vm.stack[0 : vm.sp+1]
 	fmt.Printf("%04d: %s \t%v\n", address, op.name, stack)
 }
 
@@ -151,7 +151,6 @@ func Jmplt(vm *Dyson) {
 	value := vm.code[vm.ip]
 	vm.ip++
 	address := vm.code[vm.ip]
-
 	if value > vm.stack[vm.sp] {
 		vm.ip = address
 	}
@@ -168,7 +167,7 @@ func main() {
 		iconst, 2,
 		iconst, 3,
 		iadd,
-		ijmplt, 10, 2,
+		br, 2,
 		print,
 		halt,
 	}
